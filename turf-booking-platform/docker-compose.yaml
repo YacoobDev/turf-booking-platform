@@ -30,8 +30,7 @@ services:
     volumes:
       - booking_data:/app/data
     depends_on:
-      turf-service:
-        condition: service_healthy
+      - turf-service
     networks:
       - turf_net
     command: uvicorn app.main:app --host 0.0.0.0 --port 8002
