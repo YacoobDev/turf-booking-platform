@@ -1,0 +1,120 @@
+services:
+  turf-service:
+    build: ./services/turf-service
+    container_name: turf-service
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+      - DATABASE_URL=sqlite:////app/turf_service.db
+    volumes:
+      - turf_data:/app/data
+    networks:
+      - turf_net
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  booking-service:
+    build: ./services/booking-service
+    container_name: booking-service
+    ports:
+      - "8002:8002"
+    environment:
+      - PORT=8002
+      - TURF_SERVICE_URL=http://turf-service:8001
+      - DATABASE_URL=sqlite:////app/booking_service.db
+    volumes:
+      - booking_data:/app/data
+    depends_on:
+      turf-service:
+        condition: service_healthy
+    networks:
+      - turf_net
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8002
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  payment-service:
+    build: ./services/payment-service
+    container_name: payment-service
+    ports:
+      - "8003:8003"
+    environment:
+      - PORT=8003
+      - DATABASE_URL=sqlite:////app/payment_service.db
+    volumes:
+      - payment_data:/app/data
+    networks:
+      - turf_net
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8003
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  notification-service:
+    build: ./services/notification-service
+    container_name: notification-service
+    ports:
+      - "8004:8004"
+    environment:
+      - PORT=8004
+      - DATABASE_URL=sqlite:////app/notification_service.db
+    volumes:
+      - notification_data:/app/data
+    networks:
+      - turf_net
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8004
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yaml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yaml'
+    networks:
+      - turf_net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - turf_net
+
+volumes:
+  turf_data:
+  booking_data:
+  payment_data:
+  notification_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  turf_net:
+    driver: bridge
