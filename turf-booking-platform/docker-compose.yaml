@@ -6,9 +6,9 @@ services:
       - "8001:8001"
     environment:
       - PORT=8001
-      - DATABASE_URL=sqlite:////app/turf_service.db
+      - DATABASE_URL=sqlite:////app/data/turf_service.db
     volumes:
-      - turf_data:/app/data
+      - ./data/turf-service:/app/data
     networks:
       - turf_net
     command: uvicorn app.main:app --host 0.0.0.0 --port 8001
@@ -26,9 +26,9 @@ services:
     environment:
       - PORT=8002
       - TURF_SERVICE_URL=http://turf-service:8001
-      - DATABASE_URL=sqlite:////app/booking_service.db
+      - DATABASE_URL=sqlite:////app/data/booking_service.db
     volumes:
-      - booking_data:/app/data
+      - ./data/booking-service:/app/data
     depends_on:
       - turf-service
     networks:
@@ -47,9 +47,9 @@ services:
       - "8003:8003"
     environment:
       - PORT=8003
-      - DATABASE_URL=sqlite:////app/payment_service.db
+      - DATABASE_URL=sqlite:////app/data/payment_service.db
     volumes:
-      - payment_data:/app/data
+      - ./data/payment-service:/app/data
     networks:
       - turf_net
     command: uvicorn app.main:app --host 0.0.0.0 --port 8003
@@ -66,9 +66,9 @@ services:
       - "8004:8004"
     environment:
       - PORT=8004
-      - DATABASE_URL=sqlite:////app/notification_service.db
+      - DATABASE_URL=sqlite:////app/data/notification_service.db
     volumes:
-      - notification_data:/app/data
+      - ./data/notification-service:/app/data
     networks:
       - turf_net
     command: uvicorn app.main:app --host 0.0.0.0 --port 8004
